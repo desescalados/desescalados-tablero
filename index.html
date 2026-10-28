@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0C0B0A">
 <title>des:escalados · Tablero</title>
+<script src="sop.js?v=0.4.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,9 +30,9 @@ a{color:inherit}
 .side{display:none}
 #main{padding:20px 16px calc(104px + env(safe-area-inset-bottom));max-width:760px;margin:0 auto}
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bg);border-top:1px solid var(--line);
-  display:grid;grid-template-columns:1fr 1fr 72px 1fr;align-items:center;padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+  display:grid;grid-template-columns:1fr 1fr 64px 1fr 1fr;align-items:center;padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
 .tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--ink3);
-  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;min-height:48px;justify-content:center}
+  font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;min-height:48px;justify-content:center}
 .tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .tab[aria-current="page"]{color:var(--orange)}
 .plus{justify-self:center;width:52px;height:52px;background:var(--orange);color:var(--on);display:grid;place-items:center}
@@ -174,6 +175,26 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--orange);outline-
 .foot{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 16px}
 .foot button{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);min-height:36px}
 .foot button:hover{color:var(--ink)}
+/* ---------- SOP y calendario ---------- */
+.paso{display:grid;grid-template-columns:34px 1fr;gap:4px;padding:12px 0;border-bottom:1px solid var(--line)}
+.paso .pn{font-family:var(--mono);font-size:12px;color:var(--orange);padding-top:3px}
+.paso p{margin:0}
+.paso .ojo{margin-top:7px;padding-left:12px;border-left:2px solid var(--line);font-size:13.5px;color:var(--ink2)}
+.paso .ojo b{color:var(--ink);font-weight:500}
+.grupo-t{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);margin:18px 0 4px}
+.rec{margin:0;padding:8px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.rec b{font-family:var(--mono);font-weight:500;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);margin-right:6px}
+.nota-sop{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink3);margin:12px 0 0;line-height:1.6}
+.vermas{display:block;width:100%;text-align:left;margin-top:14px;padding:12px 0;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);min-height:44px}
+.dia{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);margin:24px 0 0}
+.suscribir{border:1px solid var(--orange);padding:16px;margin-top:22px}
+.suscribir h2{font-size:24px}
+.suscribir p{margin:8px 0 0;color:var(--ink2);font-size:14.5px}
+.suscribir .botones{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.suscribir .btn{text-decoration:none}
+.suscribir .url{display:block;margin-top:14px;padding:10px 12px;border:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--ink3);word-break:break-all;user-select:all}
+.suscribir small{display:block;margin-top:10px;color:var(--ink3);font-size:12.5px}
+.suscribir .cambiar{margin-top:8px;min-height:36px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
 /* ---------- entrada ---------- */
 body.sin-sesion #side, body.sin-sesion #tabs{display:none}
 body.sin-sesion #main{margin-left:0;max-width:440px;padding:14vh 20px 40px}
@@ -195,7 +216,7 @@ body.sin-sesion #main{margin-left:0;max-width:440px;padding:14vh 20px 40px}
 <script>
 (function(){
 'use strict';
-var VERSION = '0.3.0';
+var VERSION = '0.4.0';
 var LS = 'desescalados-tablero-v1';
 var LSF = 'desescalados-tablero-filtro';
 var LOCAL = location.protocol==='file:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname); /* el enlace al SOP v1 solo existe en tu computador */
@@ -206,32 +227,9 @@ var ETAPAS = ['Preproducción','Grabación','Postproducción','Publicación','Al
 var ETAPAS_C = ['Pre','Grab','Post','Pub','Al aire'];
 var ESTADOS = ['propuesto','contactado','confirmado','grabado','publicado','sin respuesta'];
 
-/* ----- los 4 SOP (sistema-desescalados-v1.html): lo que se marca son los entregables ----- */
-var SOPS = [
- {n:1, nombre:'Invitado y preproducción', dueno:'JP', meta:'6 a 8 horas por episodio', items:[
-  {id:'1a', t:'Ficha del invitado completa', hace:'JP', para:'Parra'},
-  {id:'1b', t:'Guion de los seis bloques con líderes asignados', hace:'JP', para:'Parra'},
-  {id:'1c', t:'Tesis del episodio escrita en una frase', hace:'JP', para:'Parra'},
-  {id:'1d', t:'Marcas, Instagram, webs y foto en alta', hace:'JP', para:'Caliche'},
-  {id:'1e', t:'Carpeta de imágenes de proyectos del invitado', hace:'JP', para:'Caliche'},
-  {id:'1f', t:'Fechas del mes en el tablero y confirmación de 48 horas respondida', hace:'Equipo', para:'Equipo'}]},
- {n:2, nombre:'Grabación y entrega', dueno:'Parra', meta:'5 horas el día de grabación', items:[
-  {id:'2a', t:'Material completo en el disco duro, con la nomenclatura', hace:'Parra', para:'Samuel'},
-  {id:'2b', t:'Carpeta de bloopers con la nota de qué pasó en cada clip', hace:'Parra', para:'Samuel'},
-  {id:'2c', t:'Nota de incidencias', hace:'Parra', para:'Samuel'}]},
- {n:3, nombre:'Postproducción', dueno:'Samuel', meta:'Tiempo por confirmar', items:[
-  {id:'3a', t:'Transcripción en texto en INSUMOS', hace:'Samuel', para:'Caliche'},
-  {id:'3b', t:'Máster del episodio en SALIDA', hace:'Samuel', para:'Parra'},
-  {id:'3c', t:'Reel vertical', hace:'Samuel', para:'Parra'}]},
- {n:4, nombre:'Publicación y difusión', dueno:'Caliche y Parra', meta:'SOP por revisar con Caliche', items:[
-  {id:'4a', t:'Gráficos del invitado en INSUMOS, antes de la edición', hace:'Caliche', desde:1},
-  {id:'4b', t:'Lista de frases y de proyectos, dentro de 48 horas', hace:'Caliche', desde:2},
-  {id:'4c', t:'Tarjetas de proyectos en INSUMOS', hace:'Caliche', desde:2},
-  {id:'4d', t:'Portada del episodio', hace:'Caliche', desde:2},
-  {id:'4e', t:'Descripción de YouTube con capítulos', hace:'Caliche', desde:3},
-  {id:'4f', t:'Doce a quince clips listos', hace:'Parra', desde:3},
-  {id:'4g', t:'Todo programado', hace:'Parra', desde:3}]}
-];
+/* ----- los 4 SOP viven en sop.js (versión editable); aquí solo se leen ----- */
+var SOP_DATA = window.SOP_DATA;
+var SOPS = SOP_DATA.sops;
 var TOTAL = 0; SOPS.forEach(function(s){ s.items.forEach(function(i){ if(i.desde==null) i.desde = s.n-1; TOTAL++; }); });
 
 /* ----- datos de ejemplo ----- */
@@ -310,28 +308,33 @@ function migrar(old){
   n.eps=n.eps.concat((old.eps||[]).filter(propio)); n.gente=n.gente.concat((old.gente||[]).filter(propio));
   n.ejemplo=old.ejemplo; n.sig=Math.max(old.sig||100,100); return n;
 }
-/* ----- nube (Supabase): una fila por episodio y por persona; se sube solo lo que cambió ----- */
-var S = {ejemplo:false, v:2, sig:100, eps:[], gente:[]};
-var sb = null, sesion = false, enVuelo = false, timer = null;
-var snap = {eps:{}, gente:{}, meta:''};
+/* ----- nube (Supabase): una fila por episodio, persona y evento; se sube solo lo que cambió ----- */
+var COLS = [['eps','episodios'],['gente','gente'],['eventos','eventos']];
+function vacio(){ return {eps:{},gente:{},eventos:{},meta:''}; }
+var S = {ejemplo:false, v:2, sig:100, eps:[], gente:[], eventos:[]};
+var sb = null, sesion = false, enVuelo = false, timer = null, calToken = '';
+var snap = vacio();
+function evs(){ return S.eventos || (S.eventos=[]); }
 function est(v){
   if(Array.isArray(v)) return '['+v.map(est).join(',')+']';
   if(v && typeof v==='object') return '{'+Object.keys(v).filter(function(k){return v[k]!==undefined;}).sort().map(function(k){ return JSON.stringify(k)+':'+est(v[k]); }).join(',')+'}';
   return JSON.stringify(v);
 }
-function instantanea(eps,gente,ejemplo){
-  var s={eps:{},gente:{},meta:est({ejemplo:!!ejemplo,v:2})};
-  eps.forEach(function(e){ s.eps[e.id]=est(e); }); gente.forEach(function(g){ s.gente[g.id]=est(g); });
+function instantanea(d,ejemplo){
+  var s=vacio(); s.meta=est({ejemplo:!!ejemplo,v:2});
+  COLS.forEach(function(c){ (d[c[0]]||[]).forEach(function(x){ s[c[0]][x.id]=est(x); }); });
   return s;
 }
 function igual(a,b){ var ka=Object.keys(a), kb=Object.keys(b); if(ka.length!==kb.length) return false; return ka.every(function(k){ return a[k]===b[k]; }); }
 function cambios(){
-  var n=instantanea(S.eps,S.gente,S.ejemplo), c={n:n,eps:[],gente:[],delEps:[],delGente:[],meta:n.meta!==snap.meta};
-  S.eps.forEach(function(e){ if(snap.eps[e.id]!==n.eps[e.id]) c.eps.push({id:e.id,data:e}); });
-  S.gente.forEach(function(g){ if(snap.gente[g.id]!==n.gente[g.id]) c.gente.push({id:g.id,data:g}); });
-  Object.keys(snap.eps).forEach(function(id){ if(!(id in n.eps)) c.delEps.push(id); });
-  Object.keys(snap.gente).forEach(function(id){ if(!(id in n.gente)) c.delGente.push(id); });
-  c.hay=!!(c.eps.length||c.gente.length||c.delEps.length||c.delGente.length||c.meta);
+  var n=instantanea(S,S.ejemplo), c={n:n,up:{},del:{},meta:n.meta!==snap.meta,hay:false};
+  COLS.forEach(function(k){
+    var key=k[0]; c.up[key]=[]; c.del[key]=[];
+    (S[key]||[]).forEach(function(x){ if(snap[key][x.id]!==n[key][x.id]) c.up[key].push({id:x.id,data:x}); });
+    Object.keys(snap[key]).forEach(function(id){ if(!(id in n[key])) c.del[key].push(id); });
+    if(c.up[key].length||c.del[key].length) c.hay=true;
+  });
+  if(c.meta) c.hay=true;
   return c;
 }
 function guardar(){ clearTimeout(timer); timer=setTimeout(flush,350); }
@@ -340,10 +343,10 @@ function flush(){
   var c=cambios(); if(!c.hay) return;
   enVuelo=true;
   var p=[];
-  if(c.eps.length) p.push(sb.from('episodios').upsert(c.eps));
-  if(c.gente.length) p.push(sb.from('gente').upsert(c.gente));
-  if(c.delEps.length) p.push(sb.from('episodios').delete().in('id',c.delEps));
-  if(c.delGente.length) p.push(sb.from('gente').delete().in('id',c.delGente));
+  COLS.forEach(function(k){
+    if(c.up[k[0]].length) p.push(sb.from(k[1]).upsert(c.up[k[0]]));
+    if(c.del[k[0]].length) p.push(sb.from(k[1]).delete().in('id',c.del[k[0]]));
+  });
   if(c.meta) p.push(sb.from('ajustes').upsert({clave:'meta',valor:{ejemplo:!!S.ejemplo,v:2}}));
   Promise.all(p).then(function(rs){
     var er=rs.filter(function(r){return r.error;})[0]; if(er) throw er.error;
@@ -351,19 +354,36 @@ function flush(){
   }).catch(function(){ enVuelo=false; toast('No se pudo guardar. Reintento en unos segundos…'); timer=setTimeout(flush,5000); });
 }
 function leer(){
-  return Promise.all([sb.from('episodios').select('id,data'), sb.from('gente').select('id,data'), sb.from('ajustes').select('clave,valor').eq('clave','meta')]).then(function(rs){
+  var q=COLS.map(function(k){ return sb.from(k[1]).select('id,data'); });
+  q.push(sb.from('ajustes').select('clave,valor').in('clave',['meta','calendario']));
+  return Promise.all(q).then(function(rs){
     var er=rs.filter(function(r){return r.error;})[0]; if(er) throw er.error;
-    return {eps:rs[0].data.map(function(r){return r.data;}), gente:rs[1].data.map(function(r){return r.data;}), meta:rs[2].data[0]?rs[2].data[0].valor:null};
+    var f=function(r){ return r.data; }, meta=null, cal=null;
+    rs[3].data.forEach(function(a){ if(a.clave==='meta') meta=a.valor; if(a.clave==='calendario') cal=a.valor; });
+    return {eps:rs[0].data.map(f), gente:rs[1].data.map(f), eventos:rs[2].data.map(f), meta:meta, cal:cal};
   });
 }
-function aplicar(d){ S={ejemplo:d.meta?!!d.meta.ejemplo:false, v:2, sig:100, eps:d.eps, gente:d.gente}; snap=instantanea(S.eps,S.gente,S.ejemplo); }
+function aplicar(d){
+  S={ejemplo:d.meta?!!d.meta.ejemplo:false, v:2, sig:100, eps:d.eps, gente:d.gente, eventos:d.eventos};
+  if(d.cal && d.cal.token) calToken=d.cal.token;
+  snap=instantanea(S,S.ejemplo);
+}
+/* enlace secreto del calendario: se crea la primera vez que alguien entra */
+function nuevoToken(){
+  var a=new Uint8Array(24); crypto.getRandomValues(a);
+  return Array.prototype.map.call(a,function(b){ return ('0'+b.toString(16)).slice(-2); }).join('');
+}
+function guardarToken(t){
+  return sb.from('ajustes').upsert({clave:'calendario',valor:{token:t}}).then(function(r){ if(r.error) throw r.error; calToken=t; });
+}
 function cargar(){
   return leer().then(function(d){
     if(!d.meta && !d.eps.length && !d.gente.length){
       /* primera vez: se sube lo que haya en este navegador o, si no hay nada, los ejemplos */
-      var loc=Store.load(); S = !loc ? seed() : (loc.v!==2 ? migrar(loc) : loc); S.v=2;
-      snap={eps:{},gente:{},meta:''}; guardar();
+      var loc=Store.load(); S = !loc ? seed() : (loc.v!==2 ? migrar(loc) : loc); S.v=2; evs();
+      snap=vacio(); guardar();
     } else aplicar(d);
+    if(d.cal && d.cal.token) calToken=d.cal.token; else return guardarToken(nuevoToken());
   });
 }
 function hojaAbierta(){ return !!document.getElementById('capa').innerHTML; }
@@ -371,8 +391,8 @@ function refrescar(){
   if(!sb||!sesion||enVuelo||cambios().hay||hojaAbierta()) return;
   leer().then(function(d){
     if(enVuelo||cambios().hay||hojaAbierta()) return;
-    var n=instantanea(d.eps,d.gente,d.meta?d.meta.ejemplo:false);
-    if(igual(n.eps,snap.eps)&&igual(n.gente,snap.gente)&&n.meta===snap.meta) return;
+    var n=instantanea(d,d.meta?d.meta.ejemplo:false), nt=(d.cal&&d.cal.token)||calToken;
+    if(igual(n.eps,snap.eps)&&igual(n.gente,snap.gente)&&igual(n.eventos,snap.eventos)&&n.meta===snap.meta&&nt===calToken) return;
     aplicar(d); render(true);
   }).catch(function(){});
 }
@@ -398,6 +418,7 @@ var ICON = {
   gente:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.3"/><path d="M3 20c.4-3.6 2.8-5.6 6-5.6s5.6 2 6 5.6"/><path d="M15.6 5.4a3.2 3.2 0 0 1 0 6.2M17 14.6c2 .6 3.5 2.4 3.9 5"/></svg>',
   cal:'<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="1"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
   neg:'<svg viewBox="0 0 24 24"><path d="M5 19V11M12 19V5M19 19v-6"/></svg>',
+  sop:'<svg viewBox="0 0 24 24"><path d="M6 3.5h9l4 4V20.5H6z"/><path d="M14.5 3.5V8H19M9 12h7M9 15.5h7"/></svg>',
   plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
 };
 
@@ -424,20 +445,19 @@ function avisos(){
 
 /* ----- vistas ----- */
 function nav(v){
-  var items=[['hoy','Hoy',ICON.hoy],['eps','Episodios',ICON.eps],['gente','Gente',ICON.gente]];
+  var items=[['hoy','Hoy',ICON.hoy],['eps','Episodios',ICON.eps],['cal','Calendario',ICON.cal],['gente','Gente',ICON.gente],['sop','SOP',ICON.sop]];
   return items.map(function(i){ return '<button class="nav" data-act="ir" data-p="'+i[0]+'"'+(v===i[0]?' aria-current="page"':'')+'>'+i[2]+i[1]+'</button>'; }).join('');
 }
 function pintarMarco(v){
   document.getElementById('side').innerHTML =
     '<div class="brand">des<span class="o">:</span>escalados</div><div class="brand-sub">Tablero de producción</div>'+
     nav(v)+
-    '<span class="nav soon">'+ICON.cal+'Calendario<small>pronto</small></span>'+
     '<span class="nav soon">'+ICON.neg+'Negocio<small>pronto</small></span>'+
     '<button class="btn pri" data-act="mas">+ Agregar</button>'+
     '<div class="side-foot">v'+VERSION+' · conectado<br><button data-act="salir" style="margin-top:10px;color:var(--ink3);font:inherit;letter-spacing:inherit;text-transform:inherit">Cerrar sesión</button></div>';
   var t=function(k,l,ic){ return '<button class="tab" data-act="ir" data-p="'+k+'"'+(v===k?' aria-current="page"':'')+'>'+ic+l+'</button>'; };
   document.getElementById('tabs').innerHTML = t('hoy','Hoy',ICON.hoy)+t('eps','Episodios',ICON.eps)+
-    '<button class="plus" data-act="mas" aria-label="Agregar">'+ICON.plus+'</button>'+t('gente','Gente',ICON.gente);
+    '<button class="plus" data-act="mas" aria-label="Agregar">'+ICON.plus+'</button>'+t('cal','Calendario',ICON.cal)+t('gente','Gente',ICON.gente);
 }
 
 function bannerEjemplo(){
@@ -446,7 +466,7 @@ function bannerEjemplo(){
     '<span style="flex:0 0 auto;display:flex;gap:8px"><button class="btn sm" data-act="ocultarEj">Entendido</button><button class="btn sm ghost" data-act="vaciar">Empezar desde cero</button></span></div>';
 }
 function foot(){
-  return '<div class="foot"><button data-act="exportar">Exportar respaldo</button><button data-act="importar">Restaurar respaldo</button><button data-act="vaciar">Borrar todo</button><button data-act="salir">Cerrar sesión</button></div>';
+  return '<div class="foot"><button data-act="exportar">Exportar respaldo</button><button data-act="importar">Restaurar respaldo</button><button data-act="vaciar">Borrar todo</button><button data-act="ir" data-p="sop">Ver SOP v'+SOP_DATA.version+'</button><button data-act="salir">Cerrar sesión</button></div>';
 }
 
 function itemsDe(e, quien){
@@ -462,6 +482,93 @@ function checkHtml(e,s,i){
   var on=!!e.checks[i.id];
   var w = i.para ? 'Hace <b>'+h(i.hace)+'</b> · para <b>'+h(i.para)+'</b>' : 'Hace <b>'+h(i.hace)+'</b>';
   return '<button class="chk" role="checkbox" aria-checked="'+on+'" data-act="marcar" data-e="'+e.id+'" data-i="'+i.id+'"><span class="box"></span><span><span class="t">'+h(i.t)+'</span><span class="w">'+w+'</span></span></button>';
+}
+
+/* ----- fechas y calendario ----- */
+function addDias(s,n){ var d=dd(s); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function evById(id){ return evs().filter(function(x){return x.id===id;})[0]; }
+/* todo lo que tiene fecha desde "desde": las mismas fechas que salen en el enlace del calendario */
+function fechasDe(desde){
+  var out=[];
+  S.eps.forEach(function(e){
+    if(e.etapa>=4) return;
+    [['grab','Grabación'],['entrega','Máster listo'],['pub','Publicación'],['clips','Clips']].forEach(function(p){ if(e[p[0]] && e[p[0]]>=desde) out.push({f:e[p[0]],t:p[1],e:e}); });
+    if(e.grab && e.etapa<=1 && !e.checks['1f']){ var c=addDias(e.grab,-2); if(c>=desde) out.push({f:c,t:'Confirmar invitado',e:e}); }
+  });
+  evs().forEach(function(v){ if(v.fecha && v.fecha>=desde) out.push({f:v.fecha,t:'Evento',v:v}); });
+  out.sort(function(a,b){ var ka=a.f+(a.v&&a.v.hora?a.v.hora:'00:00'), kb=b.f+(b.v&&b.v.hora?b.v.hora:'00:00'); return ka<kb?-1:(ka>kb?1:0); });
+  return out;
+}
+function filaFecha(x){
+  if(x.e) return '<button class="row" data-act="ir" data-p="ep/'+x.e.id+'"><span class="n"><span class="o">'+epLabel(x.e)+'</span> '+h(x.e.nombre)+'</span><span class="tag">'+h(x.t)+'</span><span class="d">'+h(fmt(x.f))+'</span></button>';
+  return '<button class="row" data-act="editEv" data-v="'+h(x.v.id)+'"><span class="n">'+h(x.v.titulo)+'</span><span class="tag">Evento</span><span class="d">'+h(fmt(x.f))+(x.v.hora?' · '+h(x.v.hora):'')+(x.v.quien&&x.v.quien.length?' · '+h(x.v.quien.join(' y ')):'')+'</span></button>';
+}
+function calUrl(){ return SB_URL+'/functions/v1/calendario?token='+calToken; }
+function copiar(t){
+  try{ navigator.clipboard.writeText(t).then(function(){ toast('Enlace copiado'); }, function(){ prompt('Copia el enlace:',t); }); }
+  catch(e){ prompt('Copia el enlace:',t); }
+}
+function vCal(){
+  var hoy=hoyStr(), lista=fechasDe(hoy), url=calUrl(), web=url.replace(/^https:/,'webcal:');
+  var html='<div class="wrap">'+bannerEjemplo()+'<p class="kicker">'+lista.length+' fecha'+(lista.length===1?'':'s')+' por venir</p><h1>Calendario</h1><p class="lede">Grabaciones, entregas, publicaciones y eventos del equipo.</p>';
+  html+='<div class="suscribir"><h2>Ponlo en tu calendario</h2>';
+  if(calToken){
+    html+='<p>Se hace una sola vez por persona. Después se actualiza solo con lo que cambies aquí.</p><div class="botones">'+
+      '<a class="btn pri" href="'+h(web)+'">Apple Calendar</a>'+
+      '<a class="btn" href="https://calendar.google.com/calendar/r?cid='+encodeURIComponent(web)+'" target="_blank" rel="noopener">Google Calendar</a>'+
+      '<button class="btn" data-act="copiarCal">Copiar enlace</button></div>'+
+      '<span class="url">'+h(url)+'</span>'+
+      '<small>Apple lo actualiza en pocas horas. Google puede tardar hasta un día en mostrar los cambios. El enlace es secreto: quien lo tenga ve estas fechas.</small>'+
+      '<button class="cambiar" data-act="rotarCal">Cambiar el enlace</button>';
+  } else html+='<p>Preparando el enlace…</p>';
+  html+='</div>';
+  html+='<div class="sec"><div class="sec-h"><h2>Próximas fechas</h2><button class="btn sm" data-act="nuevoEv">+ Evento</button></div>';
+  var ult='';
+  html+= lista.length ? lista.map(function(x){ var cab=''; if(x.f!==ult){ ult=x.f; cab='<p class="dia">'+h(fmt(x.f,true))+'</p>'; } return cab+filaFecha(x); }).join('') : '<p class="empty">No hay fechas por venir. Agrégalas dentro de cada episodio o con el botón + Evento.</p>';
+  html+='<p class="nota-sop">Cada primer lunes del mes también aparece en tu calendario: revisar la hoja de invitados.</p></div>';
+  return html+foot()+'</div>';
+}
+
+/* ----- SOP (el contenido vive en sop.js) ----- */
+function pasosCuerpo(s){
+  var o='';
+  if(s.objetivo) o+='<p class="notas" style="margin:14px 0 0">'+h(s.objetivo)+'</p>';
+  (s.recibe||[]).forEach(function(g){
+    o+='<p class="grupo-t">'+h(g.titulo)+'</p>'+g.lista.map(function(r){ return '<p class="rec"><b>'+h(r.de)+'</b>'+h(r.t)+'</p>'; }).join('');
+  });
+  o+='<p class="grupo-t">Pasos</p>'+s.pasos.map(function(p){
+    return '<div class="paso"><span class="pn">'+pad(p.n)+'</span><div><p>'+(p.quien?'<span class="tag">'+h(p.quien)+'</span> ':'')+h(p.t)+'</p>'+(p.ojo?'<p class="ojo"><b>Ojo:</b> '+h(p.ojo)+'</p>':'')+'</div></div>';
+  }).join('');
+  (s.notas||[]).forEach(function(n){ o+='<p class="nota-sop">'+h(n)+'</p>'; });
+  if(s.meta) o+='<p class="nota-sop">'+h(s.meta)+'</p>';
+  return o;
+}
+function pasosToggle(k,s){
+  var ab=!!ui.open[k];
+  return '<button class="vermas" data-act="tog" data-k="'+k+'" aria-expanded="'+ab+'">'+(ab?'Ocultar los pasos':'Ver los pasos · SOP v'+h(SOP_DATA.version))+'</button>'+(ab?pasosCuerpo(s):'');
+}
+function vSop(){
+  var D=SOP_DATA;
+  var html='<div class="wrap"><p class="kicker">Versión '+h(D.version)+' · '+h(D.actualizado)+'</p><h1>SOP</h1><p class="lede">'+h(D.intro)+'</p>';
+  SOPS.forEach(function(s){
+    var k='sop-'+s.n, ab=!!ui.open[k];
+    html+='<div class="sop"><button class="sop-h" data-act="tog" data-k="'+k+'" aria-expanded="'+ab+'"><span class="n">SOP 0'+s.n+' · '+h(s.nombre)+'</span><span class="mono">Dueño: '+h(s.dueno)+'</span><span class="cnt">'+s.pasos.length+' pasos</span></button>'+(ab?'<div class="sop-b">'+pasosCuerpo(s)+'</div>':'')+'</div>';
+  });
+  html+='<div class="sec"><div class="sec-h"><h2>Estructura del episodio</h2></div><p class="notas">'+h(D.estructura)+'</p></div>';
+  if(D.pendientes && D.pendientes.length) html+='<div class="sec"><div class="sec-h"><h2>Falta por definir</h2></div>'+D.pendientes.map(function(p){ return '<p class="rec">'+h(p)+'</p>'; }).join('')+'</div>';
+  return html+foot()+'</div>';
+}
+
+/* ----- formulario de eventos ----- */
+function formEv(v){
+  var nuevo=!v; v=v||{titulo:'',fecha:'',hora:'',quien:[],notas:''};
+  capa('<h2>'+(nuevo?'Nuevo evento':'Evento')+'</h2><form data-form="ev" data-id="'+(nuevo?'':h(v.id))+'">'+
+   '<label class="f"><span>Qué es</span><input name="titulo" required value="'+h(v.titulo)+'" placeholder="Reunión con Arkos, feria…" autocomplete="off"></label>'+
+   '<div class="two"><label class="f"><span>Fecha</span><input name="fecha" type="date" required value="'+h(v.fecha)+'"></label><label class="f"><span>Hora (opcional)</span><input name="hora" type="time" value="'+h(v.hora)+'"></label></div>'+
+   '<div class="f" style="margin-top:14px"><span class="f-l">Quiénes van</span>'+pick('quien',EQUIPO,v.quien||[])+'</div>'+
+   '<label class="f"><span>Notas</span><textarea name="notas">'+h(v.notas)+'</textarea></label>'+
+   '<div class="actions"><button type="button" class="btn ghost" data-act="cerrar2">Cancelar</button><button class="btn pri">Guardar</button></div>'+
+   (nuevo?'':'<div class="actions" style="margin-top:10px"><button type="button" class="btn danger" data-act="borrarEv" data-v="'+h(v.id)+'">Borrar</button></div>')+'</form>');
 }
 
 function vHoy(){
@@ -488,10 +595,10 @@ function vHoy(){
   html+='</div>';
 
   var fechas=[];
-  S.eps.forEach(function(e){ if(e.etapa>=4) return; if(e.grab && e.grab>=hoy) fechas.push({f:e.grab,t:'Grabación',e:e}); if(e.pub && e.pub>=hoy) fechas.push({f:e.pub,t:'Publicación',e:e}); });
+  fechas=fechasDe(hoy);
   fechas.sort(function(a,b){return a.f<b.f?-1:1;});
   html+='<div class="sec"><div class="sec-h"><h2>Próximas fechas</h2><span class="mono">'+Math.min(fechas.length,5)+'</span></div>';
-  html+= fechas.length ? fechas.slice(0,5).map(function(x){ return '<button class="row" data-act="ir" data-p="ep/'+x.e.id+'"><span class="n"><span class="o">'+epLabel(x.e)+'</span> '+h(x.e.nombre)+'</span><span class="tag">'+x.t+'</span><span class="d">'+h(fmt(x.f))+'</span></button>'; }).join('') : '<p class="empty">Aún no hay fechas. Agrégalas dentro de cada episodio.</p>';
+  html+= fechas.length ? fechas.slice(0,5).map(filaFecha).join('') : '<p class="empty">Aún no hay fechas. Agrégalas dentro de cada episodio.</p>';
   html+='</div>'+foot()+'</div>';
   return html;
 }
@@ -521,7 +628,7 @@ function vEp(id){
   var html='<div class="wrap"><button class="back" data-act="ir" data-p="eps">← Episodios</button>'+
    '<p class="kicker">'+epLabel(e)+' · '+ETAPAS[e.etapa]+'</p><h1>'+h(e.nombre)+'</h1>'+(e.tema?'<p class="lede">'+h(e.tema)+'</p>':'');
   html+='<div class="stepper" role="group" aria-label="Etapa del episodio">'+ETAPAS_C.map(function(n,k){ return '<button class="'+(k<e.etapa?'done':(k===e.etapa?'now':''))+'" data-act="etapa" data-e="'+e.id+'" data-n="'+k+'" aria-label="Mover a '+ETAPAS[k]+'">'+n+'</button>'; }).join('')+'</div>';
-  html+='<div class="kv"><div><b>Grabación</b>'+(e.grab?h(fmt(e.grab)):'<span class="mono">Sin fecha</span>')+'</div><div><b>Publicación</b>'+(e.pub?h(fmt(e.pub)):'<span class="mono">Sin fecha</span>')+'</div>'+
+  html+='<div class="kv"><div><b>Grabación</b>'+(e.grab?h(fmt(e.grab)):'<span class="mono">Sin fecha</span>')+'</div><div><b>Máster listo</b>'+(e.entrega?h(fmt(e.entrega)):'<span class="mono">Sin fecha</span>')+'</div><div><b>Publicación</b>'+(e.pub?h(fmt(e.pub)):'<span class="mono">Sin fecha</span>')+'</div><div><b>Clips</b>'+(e.clips?h(fmt(e.clips)):'<span class="mono">Sin fecha</span>')+'</div>'+
     '<div><b>Anfitriones</b>'+(e.anfi.length?h(e.anfi.join(' y ')):'<span class="mono">Sin asignar</span>')+'</div>'+(e.etapa>=4?'<div><b>Vistas YouTube</b>'+(e.vistas?h(Number(e.vistas).toLocaleString('es-CO')):'<span class="mono">Sin dato</span>')+'</div>':'<div><b>Avance</b>'+hechos(e)+' de '+TOTAL+'</div>')+'</div>';
   SOPS.forEach(function(s){
     var cur=(s.n-1===e.etapa), key=e.id+'-'+s.n, abierto = key in ui.open ? ui.open[key] : cur;
@@ -530,7 +637,7 @@ function vEp(id){
     if(abierto){
       html+='<div class="sop-b">'+s.items.map(function(i){ return checkHtml(e,s,i); }).join('');
       if(cur && e.etapa<4) html+='<button class="btn pri" data-act="etapa" data-e="'+e.id+'" data-n="'+(e.etapa+1)+'">'+(e.etapa===3?'Marcar como al aire':'Pasar a '+ETAPAS[e.etapa+1])+' →</button>';
-      html+=(LOCAL?'<a class="lnk" href="../sistema-desescalados-v1.html" target="_blank" rel="noopener">Ver los pasos del SOP ↗</a>':'')+'</div>';
+      html+=pasosToggle('p-'+e.id+'-'+s.n,s)+'</div>';
     }
     html+='</div>';
   });
@@ -563,7 +670,7 @@ function render(keepScroll){
   var y = keepScroll ? window.scrollY : 0;
   var r=ruta(), v=r.v, html;
   var base = v==='ep'?'eps':v;
-  if(v==='hoy') html=vHoy(); else if(v==='eps') html=vEps(); else if(v==='ep') html=vEp(r.id); else if(v==='gente') html=vGente(r.id); else html=vHoy();
+  if(v==='hoy') html=vHoy(); else if(v==='eps') html=vEps(); else if(v==='ep') html=vEp(r.id); else if(v==='gente') html=vGente(r.id); else if(v==='cal') html=vCal(); else if(v==='sop') html=vSop(); else html=vHoy();
   pintarMarco(base);
   document.getElementById('main').innerHTML=html;
   window.scrollTo(0,y);
@@ -575,17 +682,18 @@ function capa(html){ var c=document.getElementById('capa'); c.innerHTML='<div cl
 function cerrar(){ document.getElementById('capa').innerHTML=''; }
 function pick(name, opts, sel, tipo){ return '<div class="pick">'+opts.map(function(o){ return '<label><input type="'+(tipo||'checkbox')+'" name="'+name+'" value="'+h(o)+'"'+(sel.indexOf(o)>-1?' checked':'')+'><span>'+h(o)+'</span></label>'; }).join('')+'</div>'; }
 function menuMas(){
-  capa('<h2>Agregar</h2><div class="menu"><button class="btn" data-act="nuevoEp">Nuevo episodio</button><button class="btn" data-act="nuevoG">Nuevo invitado u oficina</button></div><div class="actions"><button class="btn ghost" data-act="cerrar2">Cerrar</button></div>');
+  capa('<h2>Agregar</h2><div class="menu"><button class="btn" data-act="nuevoEp">Nuevo episodio</button><button class="btn" data-act="nuevoG">Nuevo invitado u oficina</button><button class="btn" data-act="nuevoEv">Nuevo evento</button></div><div class="actions"><button class="btn ghost" data-act="cerrar2">Cerrar</button></div>');
 }
 function formEp(e){
   var nuevo=!e, num = e?e.num:(S.eps.reduce(function(m,x){return Math.max(m,x.num);},0)+1);
-  e = e || {nombre:'',tema:'',anfi:[],grab:'',pub:'',notas:'',vistas:''};
+  e = e || {nombre:'',tema:'',anfi:[],grab:'',entrega:'',pub:'',clips:'',notas:'',vistas:''};
   capa('<h2>'+(nuevo?'Nuevo episodio':'Editar episodio')+'</h2><form data-form="ep" data-id="'+(nuevo?'':e.id)+'">'+
    '<div class="two"><label class="f"><span>Número</span><input name="num" type="number" min="1" inputmode="numeric" required value="'+num+'"></label>'+
    '<label class="f"><span>Nombre (invitado u oficina)</span><input name="nombre" required value="'+h(e.nombre)+'" autocomplete="off"></label></div>'+
    '<label class="f"><span>Tema (opcional)</span><input name="tema" value="'+h(e.tema)+'" autocomplete="off"></label>'+
    '<div class="f" style="margin-top:14px"><span class="f-l">Anfitriones (de a dos)</span>'+pick('anfi',EQUIPO,e.anfi)+'</div>'+
-   '<div class="two"><label class="f"><span>Grabación</span><input name="grab" type="date" value="'+h(e.grab)+'"></label><label class="f"><span>Publicación</span><input name="pub" type="date" value="'+h(e.pub)+'"></label></div>'+
+   '<div class="two"><label class="f"><span>Grabación</span><input name="grab" type="date" value="'+h(e.grab)+'"></label><label class="f"><span>Máster listo</span><input name="entrega" type="date" value="'+h(e.entrega||'')+'"></label></div>'+
+   '<div class="two"><label class="f"><span>Publicación</span><input name="pub" type="date" value="'+h(e.pub)+'"></label><label class="f"><span>Clips</span><input name="clips" type="date" value="'+h(e.clips||'')+'"></label></div>'+
    '<label class="f"><span>Vistas en YouTube (opcional)</span><input name="vistas" type="number" min="0" inputmode="numeric" value="'+h(e.vistas)+'"></label>'+
    '<label class="f"><span>Notas</span><textarea name="notas">'+h(e.notas)+'</textarea></label>'+
    '<div class="actions"><button type="button" class="btn ghost" data-act="cerrar2">Cancelar</button><button class="btn pri">Guardar</button></div></form>');
@@ -642,6 +750,12 @@ document.addEventListener('click', function(ev){
     case 'vaciar': if(confirm('¿Borrar TODOS los datos del tablero, para todo el equipo? No se puede deshacer. Primero puedes exportar un respaldo.')){ S={ejemplo:false,v:2,sig:100,eps:[],gente:[]}; guardar(); ir('hoy'); render(); } break;
     case 'salir': sb.auth.signOut(); break;
     case 'reintentar': iniciar(); break;
+    case 'tog': ui.open[d.k]=!ui.open[d.k]; render(true); break;
+    case 'nuevoEv': formEv(); break;
+    case 'editEv': formEv(evById(d.v)); break;
+    case 'borrarEv': if(confirm('¿Borrar este evento?')){ S.eventos=evs().filter(function(x){return x.id!==d.v;}); guardar(); cerrar(); render(true); } break;
+    case 'copiarCal': copiar(calUrl()); break;
+    case 'rotarCal': if(confirm('Los calendarios que ya se suscribieron con el enlace actual dejarán de actualizarse y cada persona tendrá que suscribirse de nuevo. ¿Cambiar el enlace?')){ guardarToken(nuevoToken()).then(function(){ toast('Enlace nuevo creado'); render(true); }).catch(function(){ toast('No se pudo cambiar el enlace'); }); } break;
     case 'exportar': exportar(); break;
     case 'importar': importar(); break;
     case 'actualizar': location.href=location.pathname+'?v='+encodeURIComponent(a.dataset.v); break;
@@ -660,7 +774,7 @@ document.addEventListener('submit', function(ev){
   }
   if(t==='ep'){
     var o=id?epById(id):{id:nid('e'),etapa:0,links:[],checks:{}};
-    o.num=+fd.get('num'); o.nombre=fd.get('nombre').trim(); o.tema=(fd.get('tema')||'').trim(); o.anfi=fd.getAll('anfi'); o.grab=fd.get('grab')||''; o.pub=fd.get('pub')||''; o.vistas=fd.get('vistas')?+fd.get('vistas'):''; o.notas=(fd.get('notas')||'').trim();
+    o.num=+fd.get('num'); o.nombre=fd.get('nombre').trim(); o.tema=(fd.get('tema')||'').trim(); o.anfi=fd.getAll('anfi'); o.grab=fd.get('grab')||''; o.pub=fd.get('pub')||''; o.entrega=fd.get('entrega')||''; o.clips=fd.get('clips')||''; o.vistas=fd.get('vistas')?+fd.get('vistas'):''; o.notas=(fd.get('notas')||'').trim();
     if(!id) S.eps.push(o);
     guardar(); cerrar(); if(!id) ir('ep/'+o.id); else render(true);
   } else if(t==='g'){
@@ -669,6 +783,11 @@ document.addEventListener('submit', function(ev){
     g.quien=(fd.get('quien')||'').trim(); g.contacto=(fd.get('contacto')||'').trim(); g.anfi=fd.getAll('anfi'); g.notas=(fd.get('notas')||'').trim();
     if(!id) S.gente.push(g);
     guardar(); cerrar(); ir('gente'); render(true);
+  } else if(t==='ev'){
+    var v=id?evById(id):{id:nid('v')};
+    v.titulo=fd.get('titulo').trim(); v.fecha=fd.get('fecha'); v.hora=fd.get('hora')||''; v.quien=fd.getAll('quien'); v.notas=(fd.get('notas')||'').trim();
+    if(!id) evs().push(v);
+    guardar(); cerrar(); render(true);
   } else if(t==='link'){
     var url=fd.get('url').trim(); if(!/^https?:\/\//i.test(url)) url='https://'+url;
     epById(id).links.push({nombre:fd.get('nombre').trim(), url:url}); guardar(); cerrar(); render(true);
@@ -725,7 +844,7 @@ function arrancar(){
   if(!window.supabase || !window.supabase.createClient){ pantallaError('No se pudo cargar el conector de Supabase. Revisa tu conexión y recarga la página.'); return; }
   sb=window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:true, autoRefreshToken:true}});
   sb.auth.onAuthStateChange(function(ev){
-    if(ev==='SIGNED_OUT'){ sesion=false; S={ejemplo:false,v:2,sig:100,eps:[],gente:[]}; snap={eps:{},gente:{},meta:''}; pantallaLogin(); }
+    if(ev==='SIGNED_OUT'){ sesion=false; S={ejemplo:false,v:2,sig:100,eps:[],gente:[],eventos:[]}; snap=vacio(); calToken=''; pantallaLogin(); }
   });
   sb.auth.getSession().then(function(r){ if(r.data && r.data.session) iniciar(); else pantallaLogin(); });
   setInterval(function(){ if(!document.hidden) refrescar(); }, 45000);
